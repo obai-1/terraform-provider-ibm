@@ -39,11 +39,11 @@ func dataSourceIBMDatabasePitrRead(context context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 
-	getPitrDataOptions := &clouddatabasesv5.GetPitrDataOptions{}
+	getPitrDataOptions := &clouddatabasesv5.GetPitRdataOptions{}
 
-	getPitrDataOptions.SetResourceInstanceID(d.Get("resource_instance_id").(string))
+	getPitrDataOptions.SetID(d.Get("resource_instance_id").(string))
 
-	pointInTimeRecoveryData, response, err := cloudDatabasesClient.GetPitrDataWithContext(context, getPitrDataOptions)
+	pointInTimeRecoveryData, response, err := cloudDatabasesClient.GetPitRdataWithContext(context, getPitrDataOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetPitrDataWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("GetPitrDataWithContext failed %s\n%s", err, response))

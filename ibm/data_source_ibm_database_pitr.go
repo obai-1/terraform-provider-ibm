@@ -47,6 +47,8 @@ func dataSourceIBMDatabasePitrRead(context context.Context, d *schema.ResourceDa
 	if err != nil {
 		log.Printf("[DEBUG] GetPitrDataWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("GetPitrDataWithContext failed %s\n%s", err, response))
+	} else {
+		log.Printf("[DEBUG] GetPitrDataWithContext succeeded %s\n%v", err, pointInTimeRecoveryData.EarliestPointInTimeRecoveryTime)
 	}
 
 	d.SetId(dataSourceIBMDatabasePitrID(d))

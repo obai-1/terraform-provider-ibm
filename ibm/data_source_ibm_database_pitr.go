@@ -39,21 +39,21 @@ func dataSourceIBMDatabasePitrRead(context context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 
-	getPitrDataOptions := &clouddatabasesv5.GetPitRdataOptions{}
+	getPitrDataOptions := &clouddatabasesv5.GetPitrDataOptions{}
 
 	getPitrDataOptions.SetID(d.Get("resource_instance_id").(string))
 
-	pointInTimeRecoveryData, response, err := cloudDatabasesClient.GetPitRdataWithContext(context, getPitrDataOptions)
+	pointInTimeRecoveryData, response, err := cloudDatabasesClient.GetPitrDataWithContext(context, getPitrDataOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetPitrDataWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("GetPitrDataWithContext failed %s\n%s", err, response))
 	} else {
-		log.Printf("[DEBUG] GetPitrDataWithContext succeeded %s\n%v", err, pointInTimeRecoveryData.EarliestPointInTimeRecoveryTime)
+		log.Printf("[DEBUG] GetPitrDataWithContext succeeded %s\n%v", err, pointInTimeRecoveryData.PointInTimeRecoveryData.EarliestPointInTimeRecoveryTime)
 	}
 
 	d.SetId(dataSourceIBMDatabasePitrID(d))
 
-	if err = d.Set("earliest_point_in_time_recovery_time", pointInTimeRecoveryData.EarliestPointInTimeRecoveryTime); err != nil {
+	if err = d.Set("earliest_point_in_time_recovery_time", pointInTimeRecoveryData.PointInTimeRecoveryData.EarliestPointInTimeRecoveryTime); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting earliest_point_in_time_recovery_time: %s", err))
 	}
 

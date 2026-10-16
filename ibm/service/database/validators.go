@@ -33,11 +33,12 @@ type Version struct {
 }
 
 type VersionTransition struct {
-	Application         string
-	Method              string
-	FromVersion         string
-	ToVersion           string
-	SkipBackupSupported *bool
+	Application           string
+	Method                string
+	FromVersion           string
+	ToVersion             string
+	SkipBackupSupported   *bool
+	SkipReadOnlySupported *bool
 }
 
 func expandVersion(version clouddatabasesv5.VersionsCapabilityItem) *Version {
@@ -62,6 +63,10 @@ func expandVersion(version clouddatabasesv5.VersionsCapabilityItem) *Version {
 				versionTransition.SkipBackupSupported = skipBackup
 			}
 
+			if skipReadOnly := transition.SkipReadOnlySupported; skipReadOnly != nil {
+				versionTransition.SkipReadOnlySupported = skipReadOnly
+			}
+
 			transitions = append(transitions, versionTransition)
 		}
 		expandedVersion.Transitions = transitions
@@ -83,6 +88,15 @@ func (v *Version) isSkipBackupUpgradeAllowed(version string) bool {
 	for _, transition := range v.Transitions {
 		if transition.ToVersion == version && transition.SkipBackupSupported != nil && transition.Method == inPlace {
 			return *transition.SkipBackupSupported
+		}
+	}
+	return false
+}
+
+func (v *Version) isSkipReadOnlyUpgradeAllowed(version string) bool {
+	for _, transition := range v.Transitions {
+		if transition.ToVersion == version && transition.SkipReadOnlySupported != nil && transition.Method == inPlace {
+			return *transition.SkipReadOnlySupported
 		}
 	}
 	return false
@@ -132,7 +146,7 @@ func fetchDeploymentVersion(instanceId string, location string, meta interface{}
 	return version
 }
 
-func validateUpgradeVersion(instanceId string, location string, oldVersion string, upgradeVersion string, skipBackup bool, meta interface{}) (err error) {
+func validateUpgradeVersion(instanceId string, location string, oldVersion string, upgradeVersion string, skipBackup bool, skipReadOnly bool, meta interface{}) (err error) {
 	deploymentVersion := fetchDeploymentVersionFn(instanceId, location, meta)
 
 	if deploymentVersion == nil || deploymentVersion.hasUpgradeVersions() == false {
@@ -146,6 +160,10 @@ func validateUpgradeVersion(instanceId string, location string, oldVersion strin
 
 	if skipBackup && !deploymentVersion.isSkipBackupUpgradeAllowed(upgradeVersion) {
 		return fmt.Errorf("Skipping backup is not allowed when upgrading to version %s", upgradeVersion)
+	}
+
+	if skipReadOnly && !deploymentVersion.isSkipReadOnlyUpgradeAllowed(upgradeVersion) {
+		return fmt.Errorf("Skipping read-only mode is not allowed when upgrading to version %s", upgradeVersion)
 	}
 
 	return nil

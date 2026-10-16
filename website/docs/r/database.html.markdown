@@ -1020,6 +1020,10 @@ Review the argument reference that you can specify for your resource.
     > ⚠️ **Warning:** For Classic plans, skipping a backup is **not recommended**.
     > Skipping a backup before a version upgrade is dangerous and may result in **data loss** if the upgrade fails at any stage — there will be **no immediate backup** to restore from.
 
+- `version_upgrade_skip_read_only` - (Optional, Boolean) Whether to skip putting the database cluster in read-only mode before upgrading the database version. This is only applicable to Elasticsearch. To learn more, refer to the version upgrade documentation.
+
+  **Gen2:** Accepted but ignored (Classic-only feature for version upgrades).
+
 - `deletion_protection` - (Optional, Boolean) If the DB instance should have deletion protection within terraform enabled. This is not a property of the resource and does not prevent deletion outside of terraform. The database can't be deleted by terraform when this value is set to `true`. The default is `false`.
 - `users` - (Optional, List of Objects) A list of users that you want to create on the database. Multiple blocks are allowed.
 

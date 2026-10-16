@@ -143,8 +143,9 @@ func TestGen2IgnoredAttrsWarnings(t *testing.T) {
 
 	t.Run("multiple ignored attrs return one grouped warning (configuration excluded)", func(t *testing.T) {
 		d := testGen2DatabaseResourceData(t, map[string]interface{}{
-			"version_upgrade_skip_backup": true,
-			"skip_initial_backup":         true,
+			"version_upgrade_skip_backup":    true,
+			"version_upgrade_skip_read_only": true,
+			"skip_initial_backup":            true,
 		})
 
 		diags := g.WarnIgnoredAttrs(d)
@@ -160,6 +161,7 @@ func TestGen2IgnoredAttrsWarnings(t *testing.T) {
 		}
 
 		requireWarningContains(t, diags, "version_upgrade_skip_backup")
+		requireWarningContains(t, diags, "version_upgrade_skip_read_only")
 		requireWarningContains(t, diags, "skip_initial_backup")
 	})
 

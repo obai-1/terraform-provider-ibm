@@ -43,6 +43,7 @@ var gen2IgnoredAttrs = []string{
 	"offline_restore",
 	"async_restore",
 	"version_upgrade_skip_backup",
+	"version_upgrade_skip_read_only",
 	"skip_initial_backup",
 }
 
@@ -128,8 +129,9 @@ var gen2AttrGuidance = map[string]string{
 	"auto_scaling":                "auto-scaling settings are currently ignored",
 	"offline_restore":             "offline restore settings are currently ignored",
 	"async_restore":               "async restore settings are currently ignored",
-	"version_upgrade_skip_backup": "version upgrade backup skipping is currently ignored",
-	"skip_initial_backup":         "initial backup skipping is currently ignored",
+	"version_upgrade_skip_backup":    "version upgrade backup skipping is currently ignored",
+	"version_upgrade_skip_read_only": "version upgrade skip read-only is currently ignored",
+	"skip_initial_backup":            "initial backup skipping is currently ignored",
 	"key_protect_instance":        "this Classic key protection setting is currently ignored",
 }
 

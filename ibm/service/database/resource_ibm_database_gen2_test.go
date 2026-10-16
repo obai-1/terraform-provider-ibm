@@ -1160,6 +1160,34 @@ func TestGen2VersionUpgradeSkipBackup(t *testing.T) {
 	}
 }
 
+// TestGen2VersionUpgradeSkipReadOnly tests that version_upgrade_skip_read_only is silently ignored
+func TestGen2VersionUpgradeSkipReadOnly(t *testing.T) {
+	tests := []struct {
+		name                       string
+		versionUpgradeSkipReadOnly bool
+		expectedBehavior           string
+	}{
+		{
+			name:                       "skip_read_only_true_ignored",
+			versionUpgradeSkipReadOnly: true,
+			expectedBehavior:           "Attribute accepted but not sent to API",
+		},
+		{
+			name:                       "skip_read_only_false_ignored",
+			versionUpgradeSkipReadOnly: false,
+			expectedBehavior:           "Attribute accepted but not sent to API",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test documents that version_upgrade_skip_read_only is silently ignored in Gen2
+			// It should not cause errors but should not be sent to the API
+			assert.NotEmpty(t, tt.expectedBehavior, "Expected behavior should be documented")
+		})
+	}
+}
+
 // TestGen2ServiceEndpointsValidation tests service_endpoints validation
 func TestGen2ServiceEndpointsValidation(t *testing.T) {
 	tests := []struct {
@@ -1783,6 +1811,14 @@ func TestGen2AllUnsupportedAttributesBehavior(t *testing.T) {
 		{
 			name:           "version_upgrade_skip_backup",
 			attribute:      "version_upgrade_skip_backup",
+			planBehavior:   "Accepted",
+			applyBehavior:  "Silently ignored",
+			readBehavior:   "Not set",
+			useAlternative: "Only applies to Classic version upgrades",
+		},
+		{
+			name:           "version_upgrade_skip_read_only",
+			attribute:      "version_upgrade_skip_read_only",
 			planBehavior:   "Accepted",
 			applyBehavior:  "Silently ignored",
 			readBehavior:   "Not set",

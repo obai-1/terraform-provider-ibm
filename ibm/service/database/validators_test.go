@@ -249,25 +249,28 @@ func MockGetDeploymentCapability(capability string, instanceID string, options D
 				IsPreferred: core.BoolPtr(false),
 				Transitions: []clouddatabasesv5.VersionsCapabilityItemTransitionsItem{
 					{
-						Application:         core.StringPtr("mongodb"),
-						FromVersion:         core.StringPtr("6"),
-						ToVersion:           core.StringPtr("7"),
-						Method:              core.StringPtr(inPlace),
-						SkipBackupSupported: core.BoolPtr(false),
+						Application:           core.StringPtr("mongodb"),
+						FromVersion:           core.StringPtr("6"),
+						ToVersion:             core.StringPtr("7"),
+						Method:                core.StringPtr(inPlace),
+						SkipBackupSupported:   core.BoolPtr(false),
+						SkipReadOnlySupported: core.BoolPtr(false),
 					},
 					{
-						Application:         core.StringPtr("mongodb"),
-						FromVersion:         core.StringPtr("6"),
-						ToVersion:           core.StringPtr("8"),
-						Method:              core.StringPtr(inPlace),
-						SkipBackupSupported: core.BoolPtr(true),
+						Application:           core.StringPtr("mongodb"),
+						FromVersion:           core.StringPtr("6"),
+						ToVersion:             core.StringPtr("8"),
+						Method:                core.StringPtr(inPlace),
+						SkipBackupSupported:   core.BoolPtr(true),
+						SkipReadOnlySupported: core.BoolPtr(true),
 					},
 					{
-						Application:         core.StringPtr("mongodb"),
-						FromVersion:         core.StringPtr("6"),
-						ToVersion:           core.StringPtr("10"),
-						Method:              core.StringPtr(restore),
-						SkipBackupSupported: core.BoolPtr(true),
+						Application:           core.StringPtr("mongodb"),
+						FromVersion:           core.StringPtr("6"),
+						ToVersion:             core.StringPtr("10"),
+						Method:                core.StringPtr(restore),
+						SkipBackupSupported:   core.BoolPtr(true),
+						SkipReadOnlySupported: core.BoolPtr(true),
 					},
 				},
 			},
@@ -297,6 +300,7 @@ func TestValidateVersion(t *testing.T) {
 		oldVersion         string
 		upgradeVersion     string
 		skipBackup         bool
+		skipReadOnly       bool
 		mockCapabilityFunc func(capability string, instanceID string, options DeploymentCapabilityOptions, meta interface{}) (*clouddatabasesv5.Capability, error)
 		expectedError      string
 	}{
@@ -307,6 +311,7 @@ func TestValidateVersion(t *testing.T) {
 			oldVersion:         "8",
 			upgradeVersion:     "9",
 			skipBackup:         false,
+			skipReadOnly:       false,
 			mockCapabilityFunc: MockGetDeploymentCapabilityNoTransitions,
 			expectedError:      "No available upgrade versions for version 8",
 		},
@@ -317,6 +322,7 @@ func TestValidateVersion(t *testing.T) {
 			oldVersion:         "9",
 			upgradeVersion:     "10",
 			skipBackup:         false,
+			skipReadOnly:       false,
 			mockCapabilityFunc: MockGetDeploymentCapability,
 			expectedError:      "Version 10 is not a valid upgrade version. Allowed versions: [7 8]",
 		},
@@ -327,8 +333,31 @@ func TestValidateVersion(t *testing.T) {
 			oldVersion:         "6",
 			upgradeVersion:     "7",
 			skipBackup:         true,
+			skipReadOnly:       false,
 			mockCapabilityFunc: MockGetDeploymentCapability,
 			expectedError:      "Skipping backup is not allowed when upgrading to version 7",
+		},
+		{
+			description:        "When skip read only is not allowed for upgrade version, Expect skip read only error",
+			instanceID:         "test-instance",
+			location:           "eu-gb",
+			oldVersion:         "6",
+			upgradeVersion:     "7",
+			skipBackup:         false,
+			skipReadOnly:       true,
+			mockCapabilityFunc: MockGetDeploymentCapability,
+			expectedError:      "Skipping read-only mode is not allowed when upgrading to version 7",
+		},
+		{
+			description:        "When skip read only is allowed for upgrade version, Expect no error",
+			instanceID:         "test-instance",
+			location:           "eu-gb",
+			oldVersion:         "6",
+			upgradeVersion:     "8",
+			skipBackup:         false,
+			skipReadOnly:       true,
+			mockCapabilityFunc: MockGetDeploymentCapability,
+			expectedError:      "",
 		},
 		{
 			description:        "When the upgrade version is valid, Expect no error",
@@ -337,6 +366,7 @@ func TestValidateVersion(t *testing.T) {
 			oldVersion:         "6",
 			upgradeVersion:     "7",
 			skipBackup:         false,
+			skipReadOnly:       false,
 			mockCapabilityFunc: MockGetDeploymentCapability,
 			expectedError:      "",
 		},
@@ -360,7 +390,7 @@ func TestValidateVersion(t *testing.T) {
 				return expandVersion(capability.Versions[0])
 			}
 
-			err := validateUpgradeVersion(tc.instanceID, tc.location, tc.oldVersion, tc.upgradeVersion, tc.skipBackup, &MockMeta{})
+			err := validateUpgradeVersion(tc.instanceID, tc.location, tc.oldVersion, tc.upgradeVersion, tc.skipBackup, tc.skipReadOnly, &MockMeta{})
 
 			if tc.expectedError != "" {
 				require.Error(t, err)

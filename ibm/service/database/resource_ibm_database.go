@@ -360,6 +360,11 @@ func ResourceIBMDatabaseInstance() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 			},
+			"version_upgrade_skip_read_only": {
+				Description: "Option to skip putting the database into read-only mode when upgrading version. Only applicable to Elasticsearch. Gen2: Accepted but ignored (Classic-only feature for version upgrades).",
+				Type:        schema.TypeBool,
+				Optional:    true,
+			},
 			"service_endpoints": {
 				Description:  "Types of the service endpoints. Possible values are 'public', 'private', 'public-and-private'. Required for Classic plans. Gen2: Optional; must be 'private' if set. Gen2 instances only support private endpoints and default to 'private'. Plan fails if set to 'public' or 'public-and-private'.",
 				Type:         schema.TypeString,
@@ -2427,15 +2432,17 @@ func classicDatabaseInstanceUpdate(context context.Context, d *schema.ResourceDa
 	if d.HasChange("version") {
 		version := d.Get("version").(string)
 		skipBackup := d.Get("version_upgrade_skip_backup") == true
+		skipReadOnly := d.Get("version_upgrade_skip_read_only") == true
 
 		timeoutHelper := TimeoutHelper{Now: time.Now()}
 		expirationDatetime := timeoutHelper.calculateExpirationDatetime(d.Timeout(schema.TimeoutUpdate))
 
-		log.Printf("[INFO] Triggering upgrade to version %s, %v, %s", version, skipBackup, expirationDatetime)
+		log.Printf("[INFO] Triggering upgrade to version %s, skipBackup=%v, skipReadOnly=%v, %s", version, skipBackup, skipReadOnly, expirationDatetime)
 		versionUpgradeOptions := &clouddatabasesv5.SetDatabaseInplaceVersionUpgradeOptions{
 			ID:                 core.StringPtr(instanceID),
 			Version:            core.StringPtr(version),
 			SkipBackup:         core.BoolPtr(skipBackup),
+			SkipReadOnly:       core.BoolPtr(skipReadOnly),
 			ExpirationDatetime: &expirationDatetime,
 		}
 
@@ -3519,11 +3526,12 @@ func validateVersionDiff(_ context.Context, diff *schema.ResourceDiff, meta inte
 	}
 
 	skipBackup := diff.Get("version_upgrade_skip_backup") == true
+	skipReadOnly := diff.Get("version_upgrade_skip_read_only") == true
 	oldVersionStr, _ := oldVersion.(string)
 	newVersionStr, _ := newVersion.(string)
 	location := diff.Get("location").(string)
 
-	return validateUpgradeVersion(instanceID, location, oldVersionStr, newVersionStr, skipBackup, meta)
+	return validateUpgradeVersion(instanceID, location, oldVersionStr, newVersionStr, skipBackup, skipReadOnly, meta)
 }
 
 func (c *userChange) isDelete() bool {
